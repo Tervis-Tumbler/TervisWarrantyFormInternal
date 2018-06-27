@@ -96,10 +96,11 @@ function New-UDTableWarrantyChild {
 }
 
 function New-TervisWarrantyFormDashboard {
+    Set-TervisFreshDeskEnvironment
     $Port = 10001
 	Get-UDDashboard | Where port -eq $Port | Stop-UDDashboard
 
-	$NewWarrantyParentPage = New-UDPage -Name "NewWarrantyParentPage" -Icon home -Content {
+	$NewWarrantyParentPage = New-UDPage -Name "New Warranty Parent" -Icon home -Content {
         #New-UDRow {
             #New-UDColumn -Size 6 {
                 New-UDInput -Title "New Warranty Parent" -Endpoint {
@@ -121,6 +122,35 @@ function New-TervisWarrantyFormDashboard {
                     )
                     Invoke-NewUDInputWarrantyParentInput -Parameters $PSBoundParameters
                 }
+
+                #New-UDInput -Title "New Warranty Parent" -Content {
+                #    New-UDInputField -Type textbox -Name FirstName
+                #    New-UDInputField -Type textbox -Name LastName
+                #    New-UDInputField -Type textbox -Name BusinessName
+                #    New-UDInputField -Type textbox -Name Address1
+                #    New-UDInputField -Type textbox -Name Address2
+                #    New-UDInputField -Type textbox -Name City
+                #    New-UDInputField -Type select -Name State -Values (Get-WarrantyRequestPropertyValues -PropertyName State)
+                #    New-UDInputField -Type textbox -Name PostalCode
+                #    New-UDInputField -Type textbox -Name ResidentialOrBusinessAddress -Values (Get-WarrantyRequestPropertyValues -PropertyName ResidentialOrBusinessAddress)
+                #    New-UDInputField -Type textbox -Name PhoneNumber
+                #    New-UDInputField -Type textbox -Name Email
+                #} -Endpoint {
+                #    param (
+                #        $FirstName,
+                #        $LastName,
+                #        $BusinessName,
+                #        $Address1,
+                #        $Address2,
+                #        $City,
+                #        $State,
+                #        $PostalCode,
+                #        $ResidentialOrBusinessAddress,
+                #        $PhoneNumber,
+                #        $Email
+                #    )
+                #    Invoke-NewUDInputWarrantyParentInput -Parameters $PSBoundParameters
+                #}
             #}
         #}
 	}
@@ -198,9 +228,21 @@ function New-TervisWarrantyFormDashboard {
                 }
             }
         }
-    }   
+    }
+
+    $DiagnosticsPage = New-UDPage -Url "/Diagnostics" -Icon Home -Endpoint {
+        New-UDChart -Title "FreshDesk api resonse times" -Type Line -Endpoint {
+            Get-APICallLog |
+            Add-Member -MemberType ScriptProperty -Name TotalMilliseconds -Force -PassThru -Value {
+                $This |
+                Select-Object -ExpandProperty TimeSpan |
+                Select-Object -ExpandProperty TotalMilliseconds 
+            } |
+            Out-UDChartData -DataProperty TotalMilliseconds -DatasetLabel "Total Milliseconds" -LabelProperty URL
+        }
+    }
 	
-	$Dashboard = New-UDDashboard -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage) -Title "Warranty Request Form" -EndpointInitializationScript {
+	$Dashboard = New-UDDashboard -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript {
         #Get-ChildItem -Path C:\ProgramData\PowerShellApplication\TervisFreshDeskPowerShell -File -Recurse -Filter *.psm1 -Depth 2 |
         #ForEach-Object {
         #    Import-Module -Name $_.FullName -Force
