@@ -28,7 +28,6 @@ function Invoke-NewUDInputWarrantyChildInput {
             <meta http-equiv="refresh" content="0; URL='/WarrantyChild'" />
 "@
         }
-    #New-UDInputAction -ClearInput -Toast "Warranty Line Created" #Given we are redirecting the whole page below I don't know that we need this
     }    
 }
 
@@ -92,7 +91,7 @@ function New-UDTableWarrantyChild {
             }
         } |
         Out-UDTableData -Property ID, DesignName, Size, Quantity, ManufactureYear, ReturnReason, Remove
-    } #-AutoRefresh -RefreshInterval 2  
+    }
 }
 
 function New-TervisWarrantyFormDashboard {
@@ -101,62 +100,41 @@ function New-TervisWarrantyFormDashboard {
 	Get-UDDashboard | Where port -eq $Port | Stop-UDDashboard
 
 	$NewWarrantyParentPage = New-UDPage -Name "New Warranty Parent" -Icon home -Content {
-        #New-UDRow {
-            #New-UDColumn -Size 6 {
-                New-UDInput -Title "New Warranty Parent" -Endpoint {
-                    param (
-                        $FirstName,
-                        $LastName,
-                        $BusinessName,
-                        $Address1,
-                        $Address2,
-                        $City,
-                        [ValidateSet(
-                            "AL","AK","AZ","AR","CA","CO","CT","DC","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","GU","PR","VI","AE","AA","AP"
-                        )]
-                        $State,
-                        [String]$PostalCode,
-                        [ValidateSet("Residence","Business")]$ResidentialOrBusinessAddress,
-                        $PhoneNumber,
-                        $Email
-                    )
-                    Invoke-NewUDInputWarrantyParentInput -Parameters $PSBoundParameters
-                }
+        New-UDInput -Title "New Warranty Parent" -Content {
+            New-UDInputField -Type textbox -Name FirstName
+            New-UDInputField -Type textbox -Name LastName
+            New-UDInputField -Type textbox -Name BusinessName
+            New-UDInputField -Type textbox -Name Address1
+            New-UDInputField -Type textbox -Name Address2
+            New-UDInputField -Type textbox -Name City
+            New-UDInputField -Type select -Name State -Values (
+                Get-WarrantyRequestPropertyValues -PropertyName State
+            ) -DefaultValue "FL"
 
-                #New-UDInput -Title "New Warranty Parent" -Content {
-                #    New-UDInputField -Type textbox -Name FirstName
-                #    New-UDInputField -Type textbox -Name LastName
-                #    New-UDInputField -Type textbox -Name BusinessName
-                #    New-UDInputField -Type textbox -Name Address1
-                #    New-UDInputField -Type textbox -Name Address2
-                #    New-UDInputField -Type textbox -Name City
-                #    New-UDInputField -Type select -Name State -Values (Get-WarrantyRequestPropertyValues -PropertyName State)
-                #    New-UDInputField -Type textbox -Name PostalCode
-                #    New-UDInputField -Type textbox -Name ResidentialOrBusinessAddress -Values (Get-WarrantyRequestPropertyValues -PropertyName ResidentialOrBusinessAddress)
-                #    New-UDInputField -Type textbox -Name PhoneNumber
-                #    New-UDInputField -Type textbox -Name Email
-                #} -Endpoint {
-                #    param (
-                #        $FirstName,
-                #        $LastName,
-                #        $BusinessName,
-                #        $Address1,
-                #        $Address2,
-                #        $City,
-                #        $State,
-                #        $PostalCode,
-                #        $ResidentialOrBusinessAddress,
-                #        $PhoneNumber,
-                #        $Email
-                #    )
-                #    Invoke-NewUDInputWarrantyParentInput -Parameters $PSBoundParameters
-                #}
-            #}
-        #}
+            New-UDInputField -Type textbox -Name PostalCode
+            New-UDInputField -Type select -Name ResidentialOrBusinessAddress -Values (
+                Get-WarrantyRequestPropertyValues -PropertyName ResidentialOrBusinessAddress
+            ) -DefaultValue "Residence"
+            New-UDInputField -Type textbox -Name PhoneNumber
+            New-UDInputField -Type textbox -Name Email
+        } -Endpoint {
+            param (
+                $FirstName,
+                $LastName,
+                $BusinessName,
+                $Address1,
+                $Address2,
+                $City,
+                $State,
+                $PostalCode,
+                $ResidentialOrBusinessAddress,
+                $PhoneNumber,
+                $Email
+            )
+            Invoke-NewUDInputWarrantyParentInput -Parameters $PSBoundParameters
+        }
 	}
 
-
-    
 	$NewWarrantyChildPage = New-UDPage -Url "/WarrantyChild" -Icon link -Endpoint {
         New-UDElement -Tag div -Id RedirectParent
         New-UDRow {
@@ -165,49 +143,21 @@ function New-TervisWarrantyFormDashboard {
             }
         
             New-UDLayout -Columns 2 -Content {
-                New-UDInput -Title "New Warranty Child" -Id "NewWarrantyChildInput" -Endpoint {
+                New-UDInput -Title "New Warranty Child" -Id "NewWarrantyChildInput" -Content {
+                    New-UDInputField -Name DesignName -Type textbox
+                    New-UDInputField -Name Size -Type select -Values (Get-WarrantyRequestPropertyValues -PropertyName Size) -DefaultValue "10oz (5 1/2)"
+                    New-UDInputField -Name Quantity -Type select -Values (Get-WarrantyRequestPropertyValues -PropertyName Quantity) -DefaultValue "1"
+                    New-UDInputField -Name ManufactureYear -Type select -Values (Get-WarrantyRequestPropertyValues -PropertyName ManufactureYear) -DefaultValue "Before 2004"
+                    New-UDInputField -Name ReturnReason -Type select -Values (
+                        (Get-ReturnReasonIssueTypeMapping).Keys | ConvertTo-Json | ConvertFrom-Json
+                    ) -DefaultValue "cracked"
+                } -Endpoint {
                     param (
                         $DesignName,
-                        [ValidateSet(
-                            "10oz (5 1/2)",
-                            "12oz (4 1/4)",
-                            "wavy (5 1/2)",
-                            "wine glass (8 1/2)",
-                            "My First Tervis Sippy Cup (5 1/5)",
-                            "16oz (6)",
-                            "mug (5)",
-                            "stemless wine glass (4 4/5)",
-                            "24oz (7 7/8)",
-                            "water bottle (10.4)",
-                            "8oz (4)",
-                            "goblet (7 7/8)",
-                            "collectible (2 3/4)",
-                            "tall (6 1/4)",
-                            "stout (3 1/2)",
-                            "20oz stainless Steel (6 3/4)",
-                            "30oz stainless Steel (8)",
-                            "12oz stainless (4.85)",
-                            "stainless water bottle (10.75)"
-                        )]
-                        [String]$Size,
-                
-                        [ValidateSet("1","2","3","4","5","6","7","8","9","10")][String]$Quantity,
-                        [ValidateSet(
-                            "Before 2004","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017","2018","NA","Non Tervis"
-                        )][String]$ManufactureYear,
-                
-                        [ValidateSet(
-                            "cracked",
-                            "cracked not at weld",
-                            "cracked stress cracks",
-                            "decoration fail",
-                            "film",
-                            "heat distortion",
-                            "stainless defect",
-                            "seal failure",
-                            "sunscreen"
-                        )]
-                        [String]$ReturnReason
+                        $Size,
+                        $Quantity,
+                        $ManufactureYear,
+                        $ReturnReason
                     )
                     Invoke-NewUDInputWarrantyChildInput -Parameters $PSBoundParameters
                 }
