@@ -208,8 +208,10 @@ function Install-TervisFreshDeskWarrantyForm {
 	param (
 		$ComputerName
 	)
-	Install-PowerShellApplicationUniversalDashboard -ComputerName $ComputerName -ModuleName TervisFreshDeskPowerShell -TervisModuleDependencies PasswordstatePowerShell,
-		TervisMicrosoft.PowerShell.Utility,
+    Install-PowerShellApplicationUniversalDashboard -ComputerName $ComputerName -ModuleName TervisWarrantyFormInternal -TervisModuleDependencies PasswordstatePowerShell,
+        TervisWarrantyRequest,
+        TervisMicrosoft.PowerShell.Utility,
+        TervisFreshDeskPowerShell,
         FreshDeskPowerShell,
         WebServicesPowerShellProxyBuilder -PowerShellGalleryDependencies UniversalDashboard -CommandString "New-TervisWarrantyFormDashboard"
 
