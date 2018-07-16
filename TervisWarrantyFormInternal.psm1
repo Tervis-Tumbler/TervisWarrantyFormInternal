@@ -149,7 +149,7 @@ function New-TervisWarrantyFormDashboard {
                 New-UDInput -Title "New Warranty Child" -Id "NewWarrantyChildInput" -Content {
                     New-UDInputField -Name DesignName -Type textbox
                     New-UDInputField -Name Size -Type select -Values (Get-WarrantyRequestPropertyValues -PropertyName Size) -DefaultValue "10oz (5 1/2)"
-                    New-UDInputField -Name Quantity -Type select -Values (Get-WarrantyRequestPropertyValues -PropertyName Quantity) -DefaultValue "1"
+                    New-UDInputField -Name Quantity -Type textbox -DefaultValue "1"
                     New-UDInputField -Name ManufactureYear -Type select -Values (Get-WarrantyRequestPropertyValues -PropertyName ManufactureYear) -DefaultValue "Before 2004"
                     New-UDInputField -Name ReturnReason -Type select -Values (
                         (Get-ReturnReasonIssueTypeMapping).Keys | ConvertTo-Json | ConvertFrom-Json
