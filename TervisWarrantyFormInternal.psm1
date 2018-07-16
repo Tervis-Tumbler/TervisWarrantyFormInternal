@@ -144,7 +144,7 @@ function New-TervisWarrantyFormDashboard {
             New-UDColumn -Size 12 {
                 New-UDTableWarrantyParent
             }
-        
+
             New-UDLayout -Columns 2 -Content {
                 New-UDInput -Title "New Warranty Child" -Id "NewWarrantyChildInput" -Content {
                     New-UDInputField -Name DesignName -Type textbox
