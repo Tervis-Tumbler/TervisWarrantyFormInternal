@@ -8,7 +8,7 @@ function Invoke-NewUDInputWarrantyParentInput {
     $Session:WarrantyParentTicketID = $WarrantyParentTicket.ID
     $Session:WarrantyChildTicketID = New-Object System.Collections.ArrayList
 
-    New-UDInputAction -RedirectUrl "/WarrantyChild"	
+    New-UDInputAction -RedirectUrl "/WarrantyChild"
 }
 
 function Invoke-NewUDInputWarrantyChildInput {
@@ -17,7 +17,7 @@ function Invoke-NewUDInputWarrantyChildInput {
     )
     $WarrantyRequestLine = New-WarrantyRequestLine @Parameters
 
-    $WarrantyChildTicket = $WarrantyRequestLine | 
+    $WarrantyChildTicket = $WarrantyRequestLine |
     New-WarrantyChildTicket -WarrantyParentTicketID $Session:WarrantyParentTicketID
 
     if ($WarrantyChildTicket) {
@@ -28,7 +28,7 @@ function Invoke-NewUDInputWarrantyChildInput {
             <meta http-equiv="refresh" content="0; URL='/WarrantyChild'" />
 "@
         }
-    }    
+    }
 }
 
 function New-UDTableWarrantyParent {
@@ -62,13 +62,13 @@ function New-UDTableWarrantyParent {
 }
 
 function New-UDTableWarrantyChild {
-    New-UDTable -Title "Warranty Child" -Id "WarrantyChildTable" -Headers ID, DesignName, Size, Quantity, ManufactureYear, ReturnReason, Action -Endpoint {
-        $Session:WarrantyChildTicketID | 
+    New-UDTable -Title "Warranty Child" -Id "WarrantyChildTable" -Headers ID, Subject, Size, Quantity, ManufactureYear, ReturnReason, Action -Endpoint {
+        $Session:WarrantyChildTicketID |
         ForEach-Object {
             Get-FreshDeskTicket -ID $_ |
             Where-Object {-Not $_.Deleted} |
             ConvertFrom-FreshDeskTicketToWarrantyRequestLine |
-            Add-Member -MemberType NoteProperty -Name ID -Value $_ -PassThru |                        
+            Add-Member -MemberType NoteProperty -Name ID -Value $_ -PassThru |
             Select-Object -Property *, @{
                 Name = "Remove"
                 Expression = {
@@ -81,7 +81,7 @@ function New-UDTableWarrantyChild {
                             Add-UDElement -ParentId "RedirectParent" -Content {
                                 New-UDHtml -Markup @"
                                     <meta http-equiv="refresh" content="0; URL='/WarrantyChild'" />
-"@  
+"@
                             }
                         }
                     } -Content {
@@ -90,11 +90,14 @@ function New-UDTableWarrantyChild {
                 }
             }
         } |
-        Out-UDTableData -Property ID, DesignName, Size, Quantity, ManufactureYear, ReturnReason, Remove
+        Out-UDTableData -Property ID, Subject, Size, Quantity, ManufactureYear, ReturnReason, Remove
     }
 }
 
 function New-TervisWarrantyFormDashboard {
+    param (
+        [ScriptBlock]$EndpointInitializationScript
+    )
     Set-TervisFreshDeskEnvironment
     $Port = 10001
 	Get-UDDashboard | Where port -eq $Port | Stop-UDDashboard
@@ -139,7 +142,7 @@ function New-TervisWarrantyFormDashboard {
         New-UDElement -Tag div -Id RedirectParent
         New-UDRow {
             New-UDColumn -Size 12 {
-                New-UDTableWarrantyParent              
+                New-UDTableWarrantyParent
             }
         
             New-UDLayout -Columns 2 -Content {
@@ -163,7 +166,7 @@ function New-TervisWarrantyFormDashboard {
                 }
 
                 New-UDTableWarrantyChild
-                
+
                 New-UDElement -Tag "a" -Attributes @{
                     className = "btn"
                     onClick = {
@@ -191,38 +194,29 @@ function New-TervisWarrantyFormDashboard {
             Out-UDChartData -DataProperty TotalMilliseconds -DatasetLabel "Total Milliseconds" -LabelProperty URL
         }
     }
-	
-	$Dashboard = New-UDDashboard -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript {
-        #Get-ChildItem -Path C:\ProgramData\PowerShellApplication\TervisFreshDeskPowerShell -File -Recurse -Filter *.psm1 -Depth 2 |
-        #ForEach-Object {
-        #    Import-Module -Name $_.FullName -Force
-        #}
-        
-        Set-TervisFreshDeskEnvironment
-	}
+
+	$Dashboard = New-UDDashboard -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
 
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin
+}
+
+function Invoke-TervisWarrantyFormDashboard {
+    $ScriptContent = Get-Content -Path $MyInvocation.ScriptName -Raw
+    $EndpointInitializationScript = [Scriptblock]::Create($ScriptContent.Replace("Invoke-TervisWarrantyFormDashboard",""))
+    New-TervisWarrantyFormDashboard -EndpointInitializationScript $EndpointInitializationScript
 }
 
 function Install-TervisFreshDeskWarrantyForm {
 	param (
 		$ComputerName
 	)
-    Install-PowerShellApplicationUniversalDashboard -ComputerName $ComputerName -ModuleName TervisWarrantyFormInternal -TervisModuleDependencies PasswordstatePowerShell,
+    Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName TervisWarrantyFormInternal -TervisModuleDependencies PasswordstatePowerShell,
         TervisWarrantyRequest,
         TervisMicrosoft.PowerShell.Utility,
         TervisFreshDeskPowerShell,
         FreshDeskPowerShell,
-        WebServicesPowerShellProxyBuilder -PowerShellGalleryDependencies UniversalDashboard -CommandString "New-TervisWarrantyFormDashboard"
-
-	$PowerShellApplicationInstallDirectory = Get-PowerShellApplicationInstallDirectory -ComputerName $ComputerName -ModuleName TervisFreshDeskPowerShell
-	Invoke-Command -ComputerName $ComputerName -ScriptBlock {
-		New-NetFirewallRule -Name TervisWarrantyFormDashboard -DisplayName TervisWarrantyFormDashboard -Profile Any -Direction Inbound -Action Allow -LocalPort 10001 -Protocol TCP
-		#. $Using:PowerShellApplicationInstallDirectory\Import-ApplicationModules.ps1
-		#Set-PSRepository -Trusted -Name PowerShellGallery
-		#Install-Module -Name UniversalDashboard -Scopoe CurrentUser
-		#$PSModulePathCurrentUser = Get-UserPSModulePath
-		#Copy-Item -Path $PSModulePathCurrentUser -Destination $Using:PowerShellApplicationInstallDirectory\. -Recurse
-		#Publish-UDDashboard -DashboardFile $Using:PowerShellApplicationInstallDirectory\Script.ps1
-	}
+        WebServicesPowerShellProxyBuilder -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
+Set-TervisFreshDeskEnvironment
+Invoke-TervisWarrantyFormDashboard
+"@ -EnvironmentName Infrastructure
 }
