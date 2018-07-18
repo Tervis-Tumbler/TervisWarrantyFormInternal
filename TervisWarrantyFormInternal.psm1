@@ -189,7 +189,7 @@ function New-TervisWarrantyFormDashboard {
             Add-Member -MemberType ScriptProperty -Name TotalMilliseconds -Force -PassThru -Value {
                 $This |
                 Select-Object -ExpandProperty TimeSpan |
-                Select-Object -ExpandProperty TotalMilliseconds 
+                Select-Object -ExpandProperty TotalMilliseconds
             } |
             Out-UDChartData -DataProperty TotalMilliseconds -DatasetLabel "Total Milliseconds" -LabelProperty URL
         }
