@@ -36,7 +36,6 @@ function New-UDTableWarrantyParent {
         $WarrantyRequest = Get-FreshDeskTicket -ID $Session:WarrantyParentTicketID |
         Where-Object {-Not $_.Deleted} |
         ConvertFrom-FreshDeskTicketToWarrantyRequest |
-        Add-Member -MemberType NoteProperty -PassThru -Name ID -Value $Session:WarrantyParentTicketID |
         Add-Member -MemberType NoteProperty -PassThru -Name Remove -Value (
             New-UDElement -Tag "a" -Attributes @{
                 className = "btn"
@@ -96,7 +95,9 @@ function New-UDTableWarrantyChild {
 
 function New-TervisWarrantyFormDashboard {
     param (
-        [ScriptBlock]$EndpointInitializationScript
+        [ScriptBlock]$EndpointInitializationScript,
+        $CertificateFile,
+        $CertificateFilePassword
     )
     Set-TervisFreshDeskEnvironment
     $Port = 10001
@@ -197,20 +198,29 @@ function New-TervisWarrantyFormDashboard {
 
 	$Dashboard = New-UDDashboard -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
 
-	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin
+	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword
 }
 
 function Invoke-TervisWarrantyFormDashboard {
+    if (-not (Test-Path -Path certificate.pfx)) {
+        Get-PasswordstateDocument -DocumentID 11 -OutFile certificate.pfx -DocumentLocation password
+    }
+    $CertificateFilePassword = Get-PasswordstatePassword -ID 4335 -AsCredential | Select-Object -ExpandProperty Password
+
     $ScriptContent = Get-Content -Path $MyInvocation.ScriptName -Raw
     $EndpointInitializationScript = [Scriptblock]::Create($ScriptContent.Replace("Invoke-TervisWarrantyFormDashboard",""))
-    New-TervisWarrantyFormDashboard -EndpointInitializationScript $EndpointInitializationScript
+    $File = Get-item -Path .\certificate.pfx
+    New-TervisWarrantyFormDashboard -EndpointInitializationScript $EndpointInitializationScript -CertificateFile $File -CertificateFilePassword $CertificateFilePassword
 }
 
 function Install-TervisFreshDeskWarrantyForm {
 	param (
 		$ComputerName
-	)
-    Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName TervisWarrantyFormInternal -TervisModuleDependencies PasswordstatePowerShell,
+    )
+    $EnvironmentName = "Infrastructure"
+    $ModuleName = "TervisWarrantyFormInternal"
+
+    Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName $ModuleName -TervisModuleDependencies PasswordstatePowerShell,
         TervisWarrantyRequest,
         TervisMicrosoft.PowerShell.Utility,
         TervisFreshDeskPowerShell,
@@ -218,5 +228,5 @@ function Install-TervisFreshDeskWarrantyForm {
         WebServicesPowerShellProxyBuilder -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
 Set-TervisFreshDeskEnvironment
 Invoke-TervisWarrantyFormDashboard
-"@ -EnvironmentName Infrastructure
+"@ -EnvironmentName $EnvironmentName
 }
