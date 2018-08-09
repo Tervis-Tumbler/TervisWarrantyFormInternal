@@ -62,7 +62,6 @@ function New-UDTableWarrantyParent {
 
 function New-UDTableWarrantyChild {
     New-UDTable -Title "Warranty Child" -Id "WarrantyChildTable" -Headers ID, Subject, Size, Quantity, ManufactureYear, ReturnReason, Action -Endpoint {
-        Wait-Debugger
         $Session:WarrantyChildTicketID |
         ForEach-Object {
             Get-FreshDeskTicket -ID $_ |
@@ -202,8 +201,7 @@ function New-TervisWarrantyFormDashboard {
             param (
                 [PSCredential]$Credential
             )
-            #Wait-Debugger
-            
+
             Try {
                 Set-FreshDeskCredential -Credential $Credential
                 $Agent = Get-FreshDeskAgent -Me
@@ -216,7 +214,7 @@ function New-TervisWarrantyFormDashboard {
     )
 
 	$Dashboard = New-UDDashboard -LoginPage $LoginPage -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
-
+    Remove-TervisFreshDeskEnvironment
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword
 }
 
@@ -249,6 +247,7 @@ Set-FreshDeskDomain -Domain Tervis
 if (`$Session:FreshDeskCredential) {
     Set-FreshDeskCredential -Credential `$Session:FreshDeskCredential
 }
+Set-StackTraceBreakPoint
 Invoke-TervisWarrantyFormDashboard
 "@ -EnvironmentName $EnvironmentName
 }
