@@ -62,6 +62,7 @@ function New-UDTableWarrantyParent {
 
 function New-UDTableWarrantyChild {
     New-UDTable -Title "Warranty Child" -Id "WarrantyChildTable" -Headers ID, Subject, Size, Quantity, ManufactureYear, ReturnReason, Action -Endpoint {
+        Wait-Debugger
         $Session:WarrantyChildTicketID |
         ForEach-Object {
             Get-FreshDeskTicket -ID $_ |
@@ -196,7 +197,25 @@ function New-TervisWarrantyFormDashboard {
         }
     }
 
-	$Dashboard = New-UDDashboard -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
+    $LoginPage = New-UDLoginPage -AuthenticationMethod (
+        New-UDAuthenticationMethod -Endpoint {
+            param (
+                [PSCredential]$Credential
+            )
+            #Wait-Debugger
+            
+            Try {
+                Set-FreshDeskCredential -Credential $Credential
+                $Agent = Get-FreshDeskAgent -Me
+                $Session:FreshDeskCredential = $Credential
+                New-UDAuthenticationResult -Success -UserName $Agent.contact.email
+            } catch {
+                New-UDAuthenticationResult -ErrorMessage "FreshDesk login failed"
+            }
+        }
+    )
+
+	$Dashboard = New-UDDashboard -LoginPage $LoginPage -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
 
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword
 }
@@ -226,7 +245,10 @@ function Install-TervisFreshDeskWarrantyForm {
         TervisFreshDeskPowerShell,
         FreshDeskPowerShell,
         WebServicesPowerShellProxyBuilder -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
-Set-TervisFreshDeskEnvironment
+Set-FreshDeskDomain -Domain Tervis
+if (`$Session:FreshDeskCredential) {
+    Set-FreshDeskCredential -Credential `$Session:FreshDeskCredential
+}
 Invoke-TervisWarrantyFormDashboard
 "@ -EnvironmentName $EnvironmentName
 }
