@@ -4,7 +4,7 @@ function Invoke-NewUDInputWarrantyParentInput {
         $Parameters
     )
     $WarrantyRequest = New-WarrantyRequest @Parameters
-    $WarrantyParentTicket = $WarrantyRequest | New-WarrantyParentTicket
+    $WarrantyParentTicket = $WarrantyRequest | New-WarrantyParentTicket -Credential $Session:FreshDeskCredential
     $Session:WarrantyParentTicketID = $WarrantyParentTicket.ID
     $Session:WarrantyChildTicketID = New-Object System.Collections.ArrayList
 
@@ -18,7 +18,7 @@ function Invoke-NewUDInputWarrantyChildInput {
     $WarrantyRequestLine = New-WarrantyRequestLine @Parameters
 
     $WarrantyChildTicket = $WarrantyRequestLine |
-    New-WarrantyChildTicket -WarrantyParentTicketID $Session:WarrantyParentTicketID
+    New-WarrantyChildTicket -WarrantyParentTicketID $Session:WarrantyParentTicketID -Credential $Session:FreshDeskCredential
 
     if ($WarrantyChildTicket) {
         $Session:WarrantyChildTicketID.Add($WarrantyChildTicket.ID)
@@ -33,15 +33,15 @@ function Invoke-NewUDInputWarrantyChildInput {
 
 function New-UDTableWarrantyParent {
     New-UDTable -Title "Warranty Parent" -Id "WarrantyParentTable" -Headers ID, FirstName, LastName, BusinessName, Address1, Address2, City, State, PostalCode, ResidentialOrBusinessAddress, PhoneNumber, Email, Action -Endpoint {
-        $WarrantyRequest = Get-FreshDeskTicket -ID $Session:WarrantyParentTicketID |
+        $WarrantyRequest = Get-FreshDeskTicket -ID $Session:WarrantyParentTicketID -Credential $Session:FreshDeskCredential |
         Where-Object {-Not $_.Deleted} |
         ConvertFrom-FreshDeskTicketToWarrantyRequest |
         Add-Member -MemberType NoteProperty -PassThru -Name Remove -Value (
             New-UDElement -Tag "a" -Attributes @{
                 className = "btn"
                 onClick = {
-                    Remove-FreshDeskTicket -ID $Session:WarrantyParentTicketID
-                    $Session:WarrantyChildTicketID | ForEach-Object { Remove-FreshDeskTicket -ID $_ }
+                    Remove-FreshDeskTicket -ID $Session:WarrantyParentTicketID -Credential $Session:FreshDeskCredential
+                    $Session:WarrantyChildTicketID | ForEach-Object { Remove-FreshDeskTicket -ID $_ -Credential $Session:FreshDeskCredential}
                     Remove-Item -Path Session:WarrantyParentTicketID
                     Remove-Item -Path Session:WarrantyChildTicketID
                     Add-UDElement -ParentId "RedirectParent" -Content {
@@ -64,7 +64,7 @@ function New-UDTableWarrantyChild {
     New-UDTable -Title "Warranty Child" -Id "WarrantyChildTable" -Headers ID, Subject, Size, Quantity, ManufactureYear, ReturnReason, Action -Endpoint {
         $Session:WarrantyChildTicketID |
         ForEach-Object {
-            Get-FreshDeskTicket -ID $_ |
+            Get-FreshDeskTicket -ID $_ -Credential $Session:FreshDeskCredential |
             Where-Object {-Not $_.Deleted} |
             ConvertFrom-FreshDeskTicketToWarrantyRequestLine |
             Add-Member -MemberType NoteProperty -Name ID -Value $_ -PassThru |
@@ -74,7 +74,7 @@ function New-UDTableWarrantyChild {
                     New-UDElement -Tag "a" -Attributes @{
                         className = "btn"
                         onClick = {
-                            Remove-FreshDeskTicket -ID $_.ID
+                            Remove-FreshDeskTicket -ID $_.ID -Credential $Session:FreshDeskCredential
                             $Session:WarrantyChildTicketID.Remove($_.ID)
 
                             Add-UDElement -ParentId "RedirectParent" -Content {
@@ -206,8 +206,7 @@ function New-TervisWarrantyFormDashboard {
             )
 
             Try {
-                Set-FreshDeskCredential -Credential $Credential
-                $Agent = Get-FreshDeskAgent -Me
+                $Agent = Get-FreshDeskAgent -Me -Credential $Credential
                 $Session:FreshDeskCredential = $Credential
                 New-UDAuthenticationResult -Success -UserName $Agent.contact.email
             } catch {
