@@ -100,6 +100,9 @@ function New-TervisWarrantyFormDashboard {
         $CertificateFilePassword
     )
     Set-TervisFreshDeskEnvironment
+    Get-TervisFreshDeskTicketField | Out-Null
+    Remove-TervisFreshDeskEnvironment
+
     $Port = 10001
 	Get-UDDashboard | Where port -eq $Port | Stop-UDDashboard
 
@@ -214,7 +217,6 @@ function New-TervisWarrantyFormDashboard {
     )
 
 	$Dashboard = New-UDDashboard -LoginPage $LoginPage -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
-    Remove-TervisFreshDeskEnvironment
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword
 }
 
