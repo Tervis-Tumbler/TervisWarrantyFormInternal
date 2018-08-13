@@ -196,6 +196,61 @@ function New-TervisWarrantyFormDashboard {
         }
     }
 
+    $ShipAndPrintWarrantyOrderPage = New-UDPage -Name "Ship and Print Warranty Order" -Content {
+        New-UDElement -Tag div -Id RedirectParent
+        New-UDLayout -Columns 1 -Content {
+            New-UDInput -Title "Invoke Ship and Print Warranty Order" -Id "Invoke-ShipAndPrintWarrantyOrder" -Endpoint {
+                param (
+                    $WeightInLB,
+                    $TicketID
+                )
+                if (-Not $Session:PrinterName) {
+                    Add-UDElement -ParentId "RedirectParent" -Content {
+                        New-UDHtml -Markup @"
+                            <meta http-equiv="refresh" content="0; URL='/Set-Shipping-Label-Printer'" />
+"@
+                    }
+                }
+                Invoke-ShipAndPrintWarrantyOrder -FreshDeskWarrantyParentTicketID $TicketID -WeightInLB $WeightInLB -PrinterName $Session:PrinterName
+            }
+        }
+    }
+    
+
+    $UnShipWarrantyOrderPage = New-UDPage -Name "UnShip Warranty Order" -Content {
+        New-UDElement -Tag div -Id RedirectParent
+        New-UDLayout -Columns 1 -Content {
+            New-UDInput -Title "Invoke UnShip Warranty Order" -Id "Invoke-UnShipWarrantyOrder" -Endpoint {
+                param (
+                    $TicketID
+                )
+                Invoke-UnShipWarrantyOrder -FreshDeskWarrantyParentTicketID $TicketID
+            }
+        }
+    }
+    
+    function Get-PrintersForDropdown {
+        [String[]](
+            Get-TervisPrinter |
+            Where-Object Vendor -eq Zebra |
+            Where-Object MediaType -eq Direct-Thermal |
+            Select-Object -ExpandProperty Name
+        )
+    }
+
+    $SetShippingPrinterPage = New-UDPage -Name "Set Shipping Label Printer" -Content {
+        New-UDInput -Title "Set Shipping Label Printer" -Id "SetShippingLabelPrinter" -Content {
+            New-UDInputField -Name PrinterName -Type select -Values (
+                Get-PrintersForDropdown
+            ) -DefaultValue "125Years"
+        } -Endpoint {
+            param (
+                $PrinterName
+            )
+            $Session:PrinterName = $PrinterName
+        }
+    }
+
     $DiagnosticsPage = New-UDPage -Url "/Diagnostics" -Icon Home -Endpoint {
         New-UDChart -Title "FreshDesk api resonse times" -Type Line -Endpoint {
             Get-APICallLog |
@@ -232,7 +287,14 @@ function New-TervisWarrantyFormDashboard {
         }
     )
 
-	$Dashboard = New-UDDashboard -LoginPage $LoginPage -Pages @($NewWarrantyParentPage, $NewWarrantyChildPage, $DiagnosticsPage) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
+	$Dashboard = New-UDDashboard -LoginPage $LoginPage -Pages @(
+        $NewWarrantyParentPage, 
+        $NewWarrantyChildPage, 
+        $DiagnosticsPage,
+        $ShipAndPrintWarrantyOrderPage,
+        $UnShipWarrantyOrderPage,
+        $SetShippingPrinterPage
+    ) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword
 }
 
@@ -260,7 +322,8 @@ function Install-TervisFreshDeskWarrantyForm {
         TervisMicrosoft.PowerShell.Utility,
         TervisFreshDeskPowerShell,
         FreshDeskPowerShell,
-        WebServicesPowerShellProxyBuilder -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
+        WebServicesPowerShellProxyBuilder,
+        TervisPrintManagement -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
 Set-FreshDeskDomain -Domain Tervis
 Invoke-TervisWarrantyFormDashboard
 "@ -EnvironmentName $EnvironmentName
