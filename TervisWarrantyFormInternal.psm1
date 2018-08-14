@@ -146,7 +146,6 @@ function New-TervisWarrantyFormDashboard {
                 $PhoneNumber,
                 $Email
             )
-            wait-debugger
             Invoke-NewUDInputWarrantyParentInput -Parameters $PSBoundParameters
         }
 	}
