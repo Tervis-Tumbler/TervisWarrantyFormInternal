@@ -327,9 +327,13 @@ function Install-TervisFreshDeskWarrantyForm {
         TervisFreshDeskPowerShell,
         FreshDeskPowerShell,
         WebServicesPowerShellProxyBuilder,
-        TervisPrintManagement -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
+        TervisPrintManagement,
+        TervisProgisticsPowerShell,
+        ProgisticsPowerShell,
+        ShipWarranty -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
 Set-FreshDeskDomain -Domain Tervis
 Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
+Set-TervisProgisticsEnvironment -Name Production
 Invoke-TervisWarrantyFormDashboard
 "@ -EnvironmentName $EnvironmentName
 }
