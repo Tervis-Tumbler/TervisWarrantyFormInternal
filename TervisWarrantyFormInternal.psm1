@@ -9,7 +9,7 @@ function Invoke-NewUDInputWarrantyParentInput {
         $Parameters
     )
     $WarrantyRequest = New-WarrantyRequest @Parameters
-    $WarrantyParentTicket = $WarrantyRequest | New-WarrantyParentTicket -Credential $Cache:FreshDeskCredentials.$User
+    $WarrantyParentTicket = $WarrantyRequest | New-WarrantyParentTicket
     $Session:WarrantyParentTicketID = $WarrantyParentTicket.ID
     $Session:WarrantyChildTicketID = New-Object System.Collections.ArrayList
 
@@ -23,7 +23,7 @@ function Invoke-NewUDInputWarrantyChildInput {
     $WarrantyRequestLine = New-WarrantyRequestLine @Parameters
 
     $WarrantyChildTicket = $WarrantyRequestLine |
-    New-WarrantyChildTicket -WarrantyParentTicketID $Session:WarrantyParentTicketID -Credential $Cache:FreshDeskCredentials.$User
+    New-WarrantyChildTicket -WarrantyParentTicketID $Session:WarrantyParentTicketID
 
     if ($WarrantyChildTicket) {
         $Session:WarrantyChildTicketID.Add($WarrantyChildTicket.ID)
@@ -38,15 +38,15 @@ function Invoke-NewUDInputWarrantyChildInput {
 
 function New-UDTableWarrantyParent {
     New-UDTable -Title "Warranty Parent" -Id "WarrantyParentTable" -Headers ID, FirstName, LastName, BusinessName, Address1, Address2, City, State, PostalCode, ResidentialOrBusinessAddress, PhoneNumber, Email, Action -Endpoint {
-        $WarrantyRequest = Get-FreshDeskTicket -ID $Session:WarrantyParentTicketID -Credential $Cache:FreshDeskCredentials.$User |
+        $WarrantyRequest = Get-FreshDeskTicket -ID $Session:WarrantyParentTicketID |
         Where-Object {-Not $_.Deleted} |
         ConvertFrom-FreshDeskTicketToWarrantyRequest |
         Add-Member -MemberType NoteProperty -PassThru -Name Remove -Value (
             New-UDElement -Tag "a" -Attributes @{
                 className = "btn"
                 onClick = {
-                    Remove-FreshDeskTicket -ID $Session:WarrantyParentTicketID -Credential $Cache:FreshDeskCredentials.$User
-                    $Session:WarrantyChildTicketID | ForEach-Object { Remove-FreshDeskTicket -ID $_ -Credential $Cache:FreshDeskCredentials.$User}
+                    Remove-FreshDeskTicket -ID $Session:WarrantyParentTicketID
+                    $Session:WarrantyChildTicketID | ForEach-Object { Remove-FreshDeskTicket -ID $_}
                     Set-Item -Path Session:WarrantyParentTicketID -Value 0
                     Set-Item -Path Session:WarrantyChildTicketID -Value (New-Object System.Collections.ArrayList)
                     Add-UDElement -ParentId "RedirectParent" -Content {
@@ -69,7 +69,7 @@ function New-UDTableWarrantyChild {
     New-UDTable -Title "Warranty Child" -Id "WarrantyChildTable" -Headers ID, Subject, Size, Quantity, ManufactureYear, ReturnReason, Action -Endpoint {
         $Session:WarrantyChildTicketID |
         ForEach-Object {
-            Get-FreshDeskTicket -ID $_ -Credential $Cache:FreshDeskCredentials.$User |
+            Get-FreshDeskTicket -ID $_ |
             Where-Object {-Not $_.Deleted} |
             ConvertFrom-FreshDeskTicketToWarrantyRequestLine |
             Add-Member -MemberType NoteProperty -Name ID -Value $_ -PassThru |
@@ -79,7 +79,7 @@ function New-UDTableWarrantyChild {
                     New-UDElement -Tag "a" -Attributes @{
                         className = "btn"
                         onClick = {
-                            Remove-FreshDeskTicket -ID $_.ID -Credential $Cache:FreshDeskCredentials.$User
+                            Remove-FreshDeskTicket -ID $_.ID
                             $Session:WarrantyChildTicketID.Remove($_.ID)
 
                             Add-UDElement -ParentId "RedirectParent" -Content {
@@ -108,8 +108,11 @@ function New-TervisWarrantyFormDashboard {
     Get-TervisFreshDeskTicketField | Out-Null
     Remove-TervisFreshDeskEnvironment
 
+    #Set-FreshDeskDomain -Domain Tervis
+    #Set-FreshDeskCredentialScriptBlock -ScriptBlock {$Cache:FreshDeskCredentials.$User}
+
     $Port = 10001
-	Get-UDDashboard | Where port -eq $Port | Stop-UDDashboard
+	Get-UDDashboard | Where-Object Port -eq $Port | Stop-UDDashboard
 
 	$NewWarrantyParentPage = New-UDPage -Name "Warranty Parent" -Content {
         New-UDInput -Title "New Warranty Parent" -Content {
@@ -120,12 +123,12 @@ function New-TervisWarrantyFormDashboard {
             New-UDInputField -Type textbox -Name Address2
             New-UDInputField -Type textbox -Name City
             New-UDInputField -Type select -Name State -Values (
-                Get-WarrantyRequestPropertyValues -PropertyName State -Credential $Cache:FreshDeskCredentials.$User
+                Get-WarrantyRequestPropertyValues -PropertyName State
             ) -DefaultValue "FL"
 
             New-UDInputField -Type textbox -Name PostalCode
             New-UDInputField -Type select -Name ResidentialOrBusinessAddress -Values (
-                Get-WarrantyRequestPropertyValues -PropertyName ResidentialOrBusinessAddress -Credential $Cache:FreshDeskCredentials.$User
+                Get-WarrantyRequestPropertyValues -PropertyName ResidentialOrBusinessAddress
             ) -DefaultValue "Residence"
             New-UDInputField -Type textbox -Name PhoneNumber
             New-UDInputField -Type textbox -Name Email
@@ -143,6 +146,7 @@ function New-TervisWarrantyFormDashboard {
                 $PhoneNumber,
                 $Email
             )
+            wait-debugger
             Invoke-NewUDInputWarrantyParentInput -Parameters $PSBoundParameters
         }
 	}
@@ -158,11 +162,11 @@ function New-TervisWarrantyFormDashboard {
                 New-UDInput -Title "New Warranty Child" -Id "NewWarrantyChildInput" -Content {
                     New-UDInputField -Name DesignName -Type textbox
                     New-UDInputField -Name Size -Type select -Values (
-                        Get-WarrantyRequestPropertyValues -PropertyName Size -Credential $Cache:FreshDeskCredentials.$User
+                        Get-WarrantyRequestPropertyValues -PropertyName Size
                     ) -DefaultValue "10oz (5 1/2)"
                     New-UDInputField -Name Quantity -Type select -Values (1..100)
                     New-UDInputField -Name ManufactureYear -Type select -Values (
-                        Get-WarrantyRequestPropertyValues -PropertyName ManufactureYear -Credential $Cache:FreshDeskCredentials.$User
+                        Get-WarrantyRequestPropertyValues -PropertyName ManufactureYear
                     ) -DefaultValue "Before 2004"
                     New-UDInputField -Name ReturnReason -Type select -Values (
                         (Get-ReturnReasonIssueTypeMapping).Keys | ConvertTo-Json | ConvertFrom-Json
@@ -273,8 +277,8 @@ function New-TervisWarrantyFormDashboard {
             }
 
             Try {
-                $Agent = Get-FreshDeskAgent -Me -Credential $Credential
-                
+                Set-FreshDeskCredential -Credential $Credential
+                $Agent = Get-FreshDeskAgent -Me
                 if ($Cache:FreshDeskCredentials.ContainsKey($Agent.contact.email)) {
                     $Cache:FreshDeskCredentials.Remove($Agent.contact.email) | Out-Null
                 }
@@ -284,6 +288,7 @@ function New-TervisWarrantyFormDashboard {
             } catch {
                 New-UDAuthenticationResult -ErrorMessage "FreshDesk login failed"
             }
+            Remove-FreshDeskCredential
         }
     )
 
@@ -325,6 +330,7 @@ function Install-TervisFreshDeskWarrantyForm {
         WebServicesPowerShellProxyBuilder,
         TervisPrintManagement -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
 Set-FreshDeskDomain -Domain Tervis
+Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
 Invoke-TervisWarrantyFormDashboard
 "@ -EnvironmentName $EnvironmentName
 }
