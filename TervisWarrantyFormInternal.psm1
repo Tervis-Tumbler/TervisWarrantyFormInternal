@@ -37,7 +37,7 @@ function Invoke-NewUDInputWarrantyChildInput {
 }
 
 function New-UDTableWarrantyParent {
-    New-UDTable -Title "Warranty Parent" -Id "WarrantyParentTable" -Headers ID, FirstName, LastName, BusinessName, Address1, Address2, City, State, PostalCode, ResidentialOrBusinessAddress, PhoneNumber, Email, Action -Endpoint {
+    New-UDTable -Title "Warranty Parent" -Id "WarrantyParentTable" -Headers ID, FirstName, LastName, BusinessName, Address1, Address2, City, State, PostalCode, ResidentialOrBusinessAddress, PhoneNumber, Email, Channel, Action -Endpoint {
         $WarrantyRequest = Get-FreshDeskTicket -ID $Session:WarrantyParentTicketID |
         Where-Object {-Not $_.Deleted} |
         ConvertFrom-FreshDeskTicketToWarrantyRequest |
@@ -61,7 +61,7 @@ function New-UDTableWarrantyParent {
         )
 
         $WarrantyRequest |
-        Out-UDTableData -Property ID, FirstName, LastName, BusinessName, Address1, Address2, City, State, PostalCode, ResidentialOrBusinessAddress, PhoneNumber, Email, Remove
+        Out-UDTableData -Property ID, FirstName, LastName, BusinessName, Address1, Address2, City, State, PostalCode, ResidentialOrBusinessAddress, PhoneNumber, Email, Channel, Remove
     }
 }
 
@@ -116,6 +116,9 @@ function New-TervisWarrantyFormDashboard {
 
 	$NewWarrantyParentPage = New-UDPage -Name "Warranty Parent" -Content {
         New-UDInput -Title "New Warranty Parent" -Content {
+            New-UDInputField -Type select -Name Channel -Values (
+                Get-WarrantyRequestPropertyValues -PropertyName Channel
+            ) -DefaultValue "Production"
             New-UDInputField -Type textbox -Name FirstName
             New-UDInputField -Type textbox -Name LastName
             New-UDInputField -Type textbox -Name BusinessName
@@ -144,7 +147,8 @@ function New-TervisWarrantyFormDashboard {
                 $PostalCode,
                 $ResidentialOrBusinessAddress,
                 $PhoneNumber,
-                $Email
+                $Email,
+                $Channel
             )
             Invoke-NewUDInputWarrantyParentInput -Parameters $PSBoundParameters
         }
@@ -336,10 +340,12 @@ function Install-TervisFreshDeskWarrantyForm {
         ZebraPowerShell,
         TCPClientPowerShell,
         TervisWCSSybase,
-        InvokeSQL -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
+        InvokeSQL -CommandString @"
 Set-FreshDeskDomain -Domain Tervis
 Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
 Set-TervisProgisticsEnvironment -Name Production
 Invoke-TervisWarrantyFormDashboard
-"@ -EnvironmentName $EnvironmentName
+"@ -EnvironmentName $EnvironmentName #-PowerShellGalleryDependencies UniversalDashboard 
+    #There is a bug in UD that cuases it to fail if imported from a non standard location
+    #UD 2.0 probably fixes this and once that is out of beta we should be able to uncomment the above
 }
