@@ -330,7 +330,13 @@ function Install-TervisFreshDeskWarrantyForm {
         TervisPrintManagement,
         TervisProgisticsPowerShell,
         ProgisticsPowerShell,
-        ShipWarranty -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
+        ShipWarranty,
+        TervisApplication,
+        TervisEnvironment,
+        ZebraPowerShell,
+        TCPClientPowerShell,
+        TervisWCSSybase,
+        InvokeSQL -PowerShellGalleryDependencies UniversalDashboard -CommandString @"
 Set-FreshDeskDomain -Domain Tervis
 Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
 Set-TervisProgisticsEnvironment -Name Production
