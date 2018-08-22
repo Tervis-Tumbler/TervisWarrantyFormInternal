@@ -324,6 +324,8 @@ function Install-TervisFreshDeskWarrantyForm {
     )
     $EnvironmentName = "Infrastructure"
     $ModuleName = "TervisWarrantyFormInternal"
+    
+	$PassswordstateAPIKey = Get-TervisPasswordstatePassword -Guid "3dfe3799-74f6-4dca-81b1-d37f355c790e"
 
     Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName $ModuleName -TervisModuleDependencies PasswordstatePowerShell,
         TervisWarrantyRequest,
@@ -341,6 +343,8 @@ function Install-TervisFreshDeskWarrantyForm {
         TCPClientPowerShell,
         TervisWCSSybase,
         InvokeSQL -CommandString @"
+Set-PasswordstateAPIKey -APIKey $PassswordstateAPIKey
+Set-PasswordstateAPIType -APIType Standard
 Set-FreshDeskDomain -Domain Tervis
 Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
 Set-TervisProgisticsEnvironment -Name Production
