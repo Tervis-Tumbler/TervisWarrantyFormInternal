@@ -325,7 +325,8 @@ function Install-TervisFreshDeskWarrantyForm {
     $EnvironmentName = "Infrastructure"
     $ModuleName = "TervisWarrantyFormInternal"
     
-	$PassswordstateAPIKey = Get-TervisPasswordstatePassword -Guid "3dfe3799-74f6-4dca-81b1-d37f355c790e"
+    $PassswordstateAPIKey = Get-TervisPasswordstatePassword -Guid "3dfe3799-74f6-4dca-81b1-d37f355c790e" |
+    Select-Object -ExpandProperty Password
 
     Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName $ModuleName -TervisModuleDependencies PasswordstatePowerShell,
         TervisWarrantyRequest,
