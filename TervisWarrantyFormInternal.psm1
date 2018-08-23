@@ -307,7 +307,7 @@ function New-TervisWarrantyFormDashboard {
 }
 
 function Invoke-TervisWarrantyFormDashboard {
-    $CertificateFilePassword = Get-TervisPasswordstatePassword -GUID "49d35824-dcce-4fc1-98ff-ebb7ecc971de" -AsCredential -PasswordListID 312 |
+    $CertificateFilePassword = Get-TervisPasswordstatePassword -GUID "49d35824-dcce-4fc1-98ff-ebb7ecc971de" -AsCredential |
     Select-Object -ExpandProperty Password
     
     $ScriptContent = Get-Content -Path $MyInvocation.ScriptName -Raw
@@ -346,6 +346,7 @@ function Install-TervisFreshDeskWarrantyForm {
         InvokeSQL -CommandString @"
 Set-PasswordstateAPIKey -APIKey $PassswordstateAPIKey
 Set-PasswordstateAPIType -APIType Standard
+Set-TervisPasswordstateAPIKeyPasswordListID -PasswordListID 312
 Set-FreshDeskDomain -Domain Tervis
 Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
 Set-TervisProgisticsEnvironment -Name Production
