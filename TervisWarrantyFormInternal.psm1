@@ -356,4 +356,9 @@ Invoke-TervisWarrantyFormDashboard
     if (-not (Test-Path -Path "$PowerShellApplicationInstallDirectoryRemote\certificate.pfx")) {
         Get-PasswordstateDocument -DocumentID 11 -OutFile "$PowerShellApplicationInstallDirectoryRemote\certificate.pfx" -DocumentLocation password
     }
+
+    Invoke-Command -ComputerName $ComputerName -ScriptBlock {
+        nssm install TervisWarrantyFormInternal powershell.exe -file "$Using:PowerShellApplicationInstallDirectoryRemote\dashboard.ps1"
+        nssm set TervisWarrantyFormInternal AppDirectory $Using:PowerShellApplicationInstallDirectoryRemote
+    }
 }
