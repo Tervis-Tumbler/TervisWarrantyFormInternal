@@ -327,6 +327,8 @@ function Install-TervisFreshDeskWarrantyForm {
     Select-Object -ExpandProperty Password
 
     $Result = Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName $ModuleName -TervisModuleDependencies PasswordstatePowerShell,
+        TervisPasswordstatePowershell,
+        TervisMicrosoft.PowerShell.Security,
         TervisWarrantyRequest,
         TervisMicrosoft.PowerShell.Utility,
         TervisFreshDeskPowerShell,
@@ -352,13 +354,13 @@ Invoke-TervisWarrantyFormDashboard
     #There is a bug in UD that cuases it to fail if imported from a non standard location
     #UD 2.0 probably fixes this and once that is out of beta we should be able to uncomment the above
 
-    $PowerShellApplicationInstallDirectoryRemote = $Result.PowerShellApplicationInstallDirectoryRemote
+    $PowerShellApplicationInstallDirectory = Get-PowerShellApplicationInstallDirectory -ComputerName $ComputerName -EnvironmentName Infrastructure -ModuleName $ModuleName
     if (-not (Test-Path -Path "$PowerShellApplicationInstallDirectoryRemote\certificate.pfx")) {
         Get-PasswordstateDocument -DocumentID 11 -OutFile "$PowerShellApplicationInstallDirectoryRemote\certificate.pfx" -DocumentLocation password
     }
 
     Invoke-Command -ComputerName $ComputerName -ScriptBlock {
-        nssm install TervisWarrantyFormInternal powershell.exe -file "$Using:PowerShellApplicationInstallDirectoryRemote\dashboard.ps1"
-        nssm set TervisWarrantyFormInternal AppDirectory $Using:PowerShellApplicationInstallDirectoryRemote
+        nssm install TervisWarrantyFormInternal powershell.exe -file "$Using:PowerShellApplicationInstallDirectory\dashboard.ps1"
+        nssm set TervisWarrantyFormInternal AppDirectory $Using:PowerShellApplicationInstallDirectory
     }
 }
