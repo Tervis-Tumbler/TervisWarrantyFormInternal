@@ -307,11 +307,9 @@ function New-TervisWarrantyFormDashboard {
 }
 
 function Invoke-TervisWarrantyFormDashboard {
-    if (-not (Test-Path -Path certificate.pfx)) {
-        Get-PasswordstateDocument -DocumentID 11 -OutFile certificate.pfx -DocumentLocation password
-    }
-    $CertificateFilePassword = Get-PasswordstatePassword -ID 4335 -AsCredential | Select-Object -ExpandProperty Password
-
+    $CertificateFilePassword = Get-TervisPasswordstatePassword -GUID "49d35824-dcce-4fc1-98ff-ebb7ecc971de" -AsCredential -PasswordListID 312 |
+    Select-Object -ExpandProperty Password
+    
     $ScriptContent = Get-Content -Path $MyInvocation.ScriptName -Raw
     $EndpointInitializationScript = [Scriptblock]::Create($ScriptContent.Replace("Invoke-TervisWarrantyFormDashboard",""))
     $File = Get-item -Path .\certificate.pfx
@@ -328,7 +326,7 @@ function Install-TervisFreshDeskWarrantyForm {
     $PassswordstateAPIKey = Get-TervisPasswordstatePassword -Guid "3dfe3799-74f6-4dca-81b1-d37f355c790e" |
     Select-Object -ExpandProperty Password
 
-    Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName $ModuleName -TervisModuleDependencies PasswordstatePowerShell,
+    $Result = Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName $ModuleName -TervisModuleDependencies PasswordstatePowerShell,
         TervisWarrantyRequest,
         TervisMicrosoft.PowerShell.Utility,
         TervisFreshDeskPowerShell,
@@ -353,4 +351,9 @@ Invoke-TervisWarrantyFormDashboard
 "@ -EnvironmentName $EnvironmentName #-PowerShellGalleryDependencies UniversalDashboard 
     #There is a bug in UD that cuases it to fail if imported from a non standard location
     #UD 2.0 probably fixes this and once that is out of beta we should be able to uncomment the above
+
+    $PowerShellApplicationInstallDirectoryRemote = $Result.PowerShellApplicationInstallDirectoryRemote
+    if (-not (Test-Path -Path "$PowerShellApplicationInstallDirectoryRemote\certificate.pfx")) {
+        Get-PasswordstateDocument -DocumentID 11 -OutFile "$PowerShellApplicationInstallDirectoryRemote\certificate.pfx" -DocumentLocation password
+    }
 }
