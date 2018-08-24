@@ -303,7 +303,7 @@ function New-TervisWarrantyFormDashboard {
         $UnShipWarrantyOrderPage,
         $SetShippingPrinterPage
     ) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
-	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword -Wait
+	Start-UDDashboard -Dashboard $Dashboard -Port $Port -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword -Wait
 }
 
 function Invoke-TervisWarrantyFormDashboard {
