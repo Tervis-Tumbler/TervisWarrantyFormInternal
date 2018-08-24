@@ -303,7 +303,7 @@ function New-TervisWarrantyFormDashboard {
         $UnShipWarrantyOrderPage,
         $SetShippingPrinterPage
     ) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
-	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword
+	Start-UDDashboard -Dashboard $Dashboard -Port $Port -AllowHttpForLogin -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword -Wait
 }
 
 function Invoke-TervisWarrantyFormDashboard {
@@ -342,6 +342,7 @@ function Install-TervisFreshDeskWarrantyForm {
         TervisEnvironment,
         ZebraPowerShell,
         TCPClientPowerShell,
+        TervisWCS,
         TervisWCSSybase,
         InvokeSQL -CommandString @"
 Set-PasswordstateAPIKey -APIKey $PassswordstateAPIKey
@@ -355,13 +356,15 @@ Invoke-TervisWarrantyFormDashboard
     #There is a bug in UD that cuases it to fail if imported from a non standard location
     #UD 2.0 probably fixes this and once that is out of beta we should be able to uncomment the above
 
-    $PowerShellApplicationInstallDirectory = Get-PowerShellApplicationInstallDirectory -ComputerName $ComputerName -EnvironmentName Infrastructure -ModuleName $ModuleName
-    if (-not (Test-Path -Path "$PowerShellApplicationInstallDirectoryRemote\certificate.pfx")) {
-        Get-PasswordstateDocument -DocumentID 11 -OutFile "$PowerShellApplicationInstallDirectoryRemote\certificate.pfx" -DocumentLocation password
+    $Remote = $Result.PowerShellApplicationInstallDirectoryRemote
+    $Local = $Result.PowerShellApplicationInstallDirectory
+
+    if (-not (Test-Path -Path "$Remote\certificate.pfx")) {
+        Get-PasswordstateDocument -DocumentID 11 -OutFile "$Remote\certificate.pfx" -DocumentLocation password
     }
 
     Invoke-Command -ComputerName $ComputerName -ScriptBlock {
-        nssm install TervisWarrantyFormInternal powershell.exe -file "$Using:PowerShellApplicationInstallDirectory\dashboard.ps1"
-        nssm set TervisWarrantyFormInternal AppDirectory $Using:PowerShellApplicationInstallDirectory
+        nssm install TervisWarrantyFormInternal powershell.exe -file "$Using:Local\dashboard.ps1"
+        nssm set TervisWarrantyFormInternal AppDirectory $Using:Local
     }
 }
