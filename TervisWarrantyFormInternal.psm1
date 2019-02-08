@@ -294,6 +294,13 @@ function New-TervisWarrantyFormDashboard {
             Remove-FreshDeskCredential
         }
     )
+    
+    $EndpointInitializationScript |
+    Out-File -FilePath .\InitilizationModule.psm1
+    $InitilizationModuleFullName = Get-Item -Path .\InitilizationModule.psm1 |
+    Select-Object -ExpandProperty FullName
+    
+    $EndpointInitialization = New-UDEndpointInitialization -Module
 
 	$Dashboard = New-UDDashboard -LoginPage $LoginPage -Pages @(
         $NewWarrantyParentPage, 
@@ -302,7 +309,8 @@ function New-TervisWarrantyFormDashboard {
         $ShipAndPrintWarrantyOrderPage,
         $UnShipWarrantyOrderPage,
         $SetShippingPrinterPage
-    ) -Title "Warranty Request Form" -EndpointInitializationScript $EndpointInitializationScript
+    ) -Title "Warranty Request Form" -EndpointInitialization $EndpointInitialization
+
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword -Wait
 }
 
