@@ -297,14 +297,15 @@ function New-TervisWarrantyFormDashboard {
     
     $EndpointInitializationScript |
     Out-File -FilePath .\InitilizationModule.psm1
+
     $InitilizationModuleFullName = Get-Item -Path .\InitilizationModule.psm1 |
     Select-Object -ExpandProperty FullName
     
-    $EndpointInitialization = New-UDEndpointInitialization -Module
+    $EndpointInitialization = New-UDEndpointInitialization -Module @( $InitilizationModuleFullName )
 
 	$Dashboard = New-UDDashboard -LoginPage $LoginPage -Pages @(
-        $NewWarrantyParentPage, 
-        $NewWarrantyChildPage, 
+        $NewWarrantyParentPage,
+        $NewWarrantyChildPage,
         $DiagnosticsPage,
         $ShipAndPrintWarrantyOrderPage,
         $UnShipWarrantyOrderPage,
