@@ -203,6 +203,28 @@ function New-TervisWarrantyFormDashboard {
         }
     }
 
+    $TicketInformationPage = New-UDPage -Url "/TicketInformation/:ParentTicketID" -Endpoint {
+        param (
+            $ParentTicketID
+        )
+        New-UDRow {
+            New-UDColumn -Size 12 {
+                $WarrantyRequest = Get-FreshDeskTicket -ID $ParentTicketID |
+                ConvertFrom-FreshDeskTicketToWarrantyRequest
+
+                New-UDTable -ArgumentList $WarrantyRequest -Title "Warranty Parent" -Id "WarrantyParentTable" -Headers ID, FirstName, LastName, BusinessName, Address1, Address2, City, State, PostalCode, ResidentialOrBusinessAddress, PhoneNumber, Email, Channel -Endpoint {
+                    $ArgumentList[0] |
+                    Out-UDTableData -Property ID, FirstName, LastName, BusinessName, Address1, Address2, City, State, PostalCode, ResidentialOrBusinessAddress, PhoneNumber, Email, Channel
+                }
+
+                New-UDTable -ArgumentList $WarrantyRequest.WarrantyLines -Title "Warranty Child" -Id "WarrantyChildTable" -Headers ID, Subject, Size, Quantity, ManufactureYear, ReturnReason -Endpoint {
+                    $ArgumentList[0] |
+                    Out-UDTableData -Property ID, Subject, Size, Quantity, ManufactureYear, ReturnReason
+                }
+            }
+        }
+    }
+
     $ShipAndPrintWarrantyOrderPage = New-UDPage -Name "Ship and Print Warranty Order" -Content {
         New-UDElement -Tag div -Id RedirectParent
         New-UDLayout -Columns 1 -Content {
@@ -309,7 +331,8 @@ function New-TervisWarrantyFormDashboard {
         $DiagnosticsPage,
         $ShipAndPrintWarrantyOrderPage,
         $UnShipWarrantyOrderPage,
-        $SetShippingPrinterPage
+        $SetShippingPrinterPage,
+        $TicketInformationPage
     ) -Title "Warranty Request Form" -EndpointInitialization $EndpointInitialization
 
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword -Wait
@@ -362,7 +385,7 @@ Set-FreshDeskDomain -Domain Tervis
 Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
 Set-TervisProgisticsEnvironment -Name Production
 Invoke-TervisWarrantyFormDashboard
-"@ -EnvironmentName $EnvironmentName -PowerShellGalleryDependencies UniversalDashboard 
+"@ -EnvironmentName $EnvironmentName -PowerShellGalleryDependencies @{Name="UniversalDashboard";RequiredVersion="2.2.1"} #2.3.0 breaks dynamic pages
 
     $Remote = $Result.PowerShellApplicationInstallDirectoryRemote
     $Local = $Result.PowerShellApplicationInstallDirectory
