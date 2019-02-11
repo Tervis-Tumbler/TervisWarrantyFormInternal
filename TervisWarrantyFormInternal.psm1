@@ -203,7 +203,18 @@ function New-TervisWarrantyFormDashboard {
         }
     }
 
-    $TicketInformationPage = New-UDPage -Url "/TicketInformation/:ParentTicketID" -Endpoint {
+    $GetTicketInformationPage = New-UDPage -Name "Get Ticket Information" -Content {
+        New-UDLayout -Columns 1 -Content {
+            New-UDInput -Title "Get Ticket Information" -Id "GetTicketInformation" -Endpoint {
+                param (
+                    $TicketID
+                )
+                New-UDInputAction -RedirectUrl "/TicketInformation/$TicketID"
+            }
+        }
+    }
+    
+    $ShowTicketInformationPage = New-UDPage -Url "/TicketInformation/:ParentTicketID" -Endpoint {
         param (
             $ParentTicketID
         )
@@ -332,7 +343,8 @@ function New-TervisWarrantyFormDashboard {
         $ShipAndPrintWarrantyOrderPage,
         $UnShipWarrantyOrderPage,
         $SetShippingPrinterPage,
-        $TicketInformationPage
+        $GetTicketInformationPage,
+        $ShowTicketInformationPage
     ) -Title "Warranty Request Form" -EndpointInitialization $EndpointInitialization
 
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword -Wait
