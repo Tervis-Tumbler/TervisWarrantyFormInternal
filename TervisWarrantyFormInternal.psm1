@@ -353,7 +353,8 @@ function Install-TervisFreshDeskWarrantyForm {
         TCPClientPowerShell,
         TervisWCS,
         TervisWCSSybase,
-        InvokeSQL -CommandString @"
+        InvokeSQL,
+        $ModuleName -CommandString @"
 Set-PasswordstateAPIKey -APIKey $PasswordstateAPIKey
 Set-PasswordstateAPIType -APIType Standard
 Set-TervisPasswordstateAPIKeyPasswordListID -PasswordListID 312
@@ -361,15 +362,13 @@ Set-FreshDeskDomain -Domain Tervis
 Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
 Set-TervisProgisticsEnvironment -Name Production
 Invoke-TervisWarrantyFormDashboard
-"@ -EnvironmentName $EnvironmentName #-PowerShellGalleryDependencies UniversalDashboard 
-    #There is a bug in UD that cuases it to fail if imported from a non standard location
-    #UD 2.0 probably fixes this and once that is out of beta we should be able to uncomment the above
+"@ -EnvironmentName $EnvironmentName -PowerShellGalleryDependencies UniversalDashboard 
 
     $Remote = $Result.PowerShellApplicationInstallDirectoryRemote
     $Local = $Result.PowerShellApplicationInstallDirectory
 
     if (-not (Test-Path -Path "$Remote\certificate.pfx")) {
-        Get-PasswordstateDocument -DocumentID 11 -OutFile "$Remote\certificate.pfx" -DocumentLocation password
+        Get-TervisPasswordSateTervisDotComWildCardCertificate -Type pfx -OutPath $Remote
     }
 
     Invoke-Command -ComputerName $ComputerName -ScriptBlock {
