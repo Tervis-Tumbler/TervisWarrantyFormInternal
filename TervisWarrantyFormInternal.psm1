@@ -372,6 +372,7 @@ function Install-TervisFreshDeskWarrantyForm {
 
     $Result = Install-PowerShellApplicationFiles -ScriptFileName Dashboard.ps1 -ComputerName $ComputerName -ModuleName $ModuleName -TervisModuleDependencies PasswordstatePowerShell,
         TervisPasswordstatePowershell,
+        TervisApplication,
         TervisMicrosoft.PowerShell.Security,
         TervisWarrantyRequest,
         TervisMicrosoft.PowerShell.Utility,
@@ -382,7 +383,6 @@ function Install-TervisFreshDeskWarrantyForm {
         TervisProgisticsPowerShell,
         ProgisticsPowerShell,
         ShipWarranty,
-        TervisApplication,
         TervisEnvironment,
         ZebraPowerShell,
         TCPClientPowerShell,
