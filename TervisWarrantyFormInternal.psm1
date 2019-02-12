@@ -72,7 +72,6 @@ function New-UDTableWarrantyChild {
             Get-FreshDeskTicket -ID $_ |
             Where-Object {-Not $_.Deleted} |
             ConvertFrom-FreshDeskTicketToWarrantyRequestLine |
-            Add-Member -MemberType NoteProperty -Name ID -Value $_ -PassThru |
             Select-Object -Property *, @{
                 Name = "Remove"
                 Expression = {
@@ -329,7 +328,7 @@ function New-TervisWarrantyFormDashboard {
     )
     
     $EndpointInitializationScript |
-    Out-File -FilePath .\InitilizationModule.psm1
+    Set-Content -Path .\InitilizationModule.psm1
 
     $InitilizationModuleFullName = Get-Item -Path .\InitilizationModule.psm1 |
     Select-Object -ExpandProperty FullName
