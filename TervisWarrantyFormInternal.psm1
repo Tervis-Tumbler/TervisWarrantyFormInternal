@@ -350,8 +350,7 @@ function New-TervisWarrantyFormDashboard {
 }
 
 function Invoke-TervisWarrantyFormDashboard {
-    $CertificateFilePassword = Get-TervisPasswordstatePassword -GUID "49d35824-dcce-4fc1-98ff-ebb7ecc971de" -AsCredential |
-    Select-Object -ExpandProperty Password
+    $CertificateFilePassword = Get-TervisPasswordSateTervisDotComWildCardCertificatePassword
     
     $ScriptContent = Get-Content -Path $MyInvocation.ScriptName -Raw
     $EndpointInitializationScript = [Scriptblock]::Create($ScriptContent.Replace("Invoke-TervisWarrantyFormDashboard",""))
