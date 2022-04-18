@@ -312,6 +312,7 @@ function New-TervisWarrantyFormDashboard {
             }
 
             Try {
+                $Credential = (Get-PasswordstatePassword -AsCredential -ID 6493) # Use TervisReturns API
                 Set-FreshDeskCredential -Credential $Credential
                 $Agent = Get-FreshDeskAgent -Me
                 if ($Cache:FreshDeskCredentials.ContainsKey($Agent.contact.email)) {
