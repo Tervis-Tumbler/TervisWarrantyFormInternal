@@ -379,8 +379,6 @@ function Install-TervisFreshDeskWarrantyForm {
         FreshDeskPowerShell,
         WebServicesPowerShellProxyBuilder,
         TervisPrintManagement,
-        TervisProgisticsPowerShell,
-        ProgisticsPowerShell,
         ShipWarranty,
         TervisEnvironment,
         ZebraPowerShell,
@@ -388,13 +386,14 @@ function Install-TervisFreshDeskWarrantyForm {
         TervisWCS,
         TervisWCSSybase,
         InvokeSQL,
+        TervisShipEngine,
         $ModuleName -CommandString @"
 Set-PasswordstateAPIKey -APIKey $PasswordstateAPIKey
 Set-PasswordstateAPIType -APIType Standard
 Set-TervisPasswordstateAPIKeyPasswordListID -PasswordListID 312
 Set-FreshDeskDomain -Domain Tervis
 Set-FreshDeskCredentialScriptBlock -ScriptBlock {`$Cache:FreshDeskCredentials.`$User}
-Set-TervisProgisticsEnvironment -Name Production
+Set-TervisShipEngineEnvironment -Name Production
 Invoke-TervisWarrantyFormDashboard
 "@ -EnvironmentName $EnvironmentName -PowerShellGalleryDependencies @{Name="UniversalDashboard";RequiredVersion="2.2.1"} #2.3.0 breaks dynamic pages
 
