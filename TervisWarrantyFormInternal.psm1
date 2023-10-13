@@ -271,6 +271,7 @@ function New-TervisWarrantyFormDashboard {
     function Get-PrintersForDropdown {
         [String[]](
             Get-TervisPrinter |
+            Where-Object ComputerName -eq "INF-PrintSrv02" |
             Where-Object Vendor -eq Zebra |
             Where-Object MediaType -eq Direct-Thermal |
             Select-Object -ExpandProperty Name
@@ -287,6 +288,7 @@ function New-TervisWarrantyFormDashboard {
                 $PrinterName
             )
             $Session:PrinterName = $PrinterName
+            "$(Get-Date -Format o)`nPrinter set to $($Session:PrinterName)`n`n" | Out-File -FilePath "C:\Log\TervisWarrantyFormInternal\log.txt" -Append
         }
     }
 
