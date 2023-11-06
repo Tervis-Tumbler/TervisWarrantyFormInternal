@@ -292,6 +292,16 @@ function New-TervisWarrantyFormDashboard {
         }
     }
 
+    $ReceiveWarrantyReturnPage = New-UDPage -Name "Receive Warranty Package" -Content {
+        New-UDInput -Title "Receive Warranty Package" -Id "WarrantyReturnNumber" -Endpoint {
+            param (
+                [Parameter(Mandatory)]$TicketID
+            )
+            Invoke-ReceiveWarrantyPackage -FreshDeskWarrantyParentTicketID $TicketID
+            Show-UDToast -Message "$TicketID has been received!" -Duration 5000
+        }
+    }
+
     $DiagnosticsPage = New-UDPage -Url "/Diagnostics" -Icon Home -Endpoint {
         New-UDChart -Title "FreshDesk api resonse times" -Type Line -Endpoint {
             Get-APICallLog |
@@ -346,7 +356,8 @@ function New-TervisWarrantyFormDashboard {
         $UnShipWarrantyOrderPage,
         $SetShippingPrinterPage,
         $GetTicketInformationPage,
-        $ShowTicketInformationPage
+        $ShowTicketInformationPage,
+        $ReceiveWarrantyReturnPage
     ) -Title "Warranty Request Form" -EndpointInitialization $EndpointInitialization
 
 	Start-UDDashboard -Dashboard $Dashboard -Port $Port -CertificateFile $CertificateFile -CertificateFilePassword $CertificateFilePassword -Wait
